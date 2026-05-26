@@ -1,499 +1,1085 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
-export const Avatar3D: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [webglSupported, setWebglSupported] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [isClient, setIsClient] = useState(false);
-
-  // Mouse coordinate tracking
-  const mouse = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+const Avatar3D: React.FC = () => {
+  const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    if (!mountRef.current) return;
 
-  useEffect(() => {
-    if (!isClient || !containerRef.current) return;
+    // =========================================================
+    // SCENE
+    // =========================================================
 
-    // Check for WebGL support
-    try {
-      const canvas = document.createElement("canvas");
-      const supportsWebGL = !!(
-        window.WebGLRenderingContext &&
-        (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
-      );
-      if (!supportsWebGL) {
-        setWebglSupported(false);
-        setLoading(false);
-        return;
-      }
-    } catch {
-      setWebglSupported(false);
-      setLoading(false);
-      return;
-    }
-
-    const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight || 400;
-
-    // 1. Scene setup
     const scene = new THREE.Scene();
 
-    // 2. Camera setup
-    const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
-    camera.position.set(0, 0.4, 7.5);
+    // =========================================================
+    // CAMERA
+    // =========================================================
 
-    // 3. Renderer setup
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const width = mountRef.current.clientWidth;
+    const height = 500;
+
+    const camera = new THREE.PerspectiveCamera(
+      24,
+      width / height,
+      0.1,
+      100
+    );
+
+    camera.position.set(0, 0.9, 8.2);
+
+    // =========================================================
+    // RENDERER
+    // =========================================================
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+    });
+
     renderer.setSize(width, height);
+
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
 
-    // 4. Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
-    scene.add(ambientLight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-    // Neon key light (Cyan/Blue)
-    const dirLight1 = new THREE.DirectionalLight(0x06b6d4, 1.3);
-    dirLight1.position.set(6, 6, 4);
-    scene.add(dirLight1);
+    renderer.shadowMap.enabled = true;
 
-    // Fill light (Purple)
-    const dirLight2 = new THREE.DirectionalLight(0xa855f7, 0.9);
-    dirLight2.position.set(-6, -2, 3);
-    scene.add(dirLight2);
+    mountRef.current.appendChild(renderer.domElement);
 
-    // Top spotlight for hair/shoulder highlights
-    const topLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    topLight.position.set(0, 10, 0);
-    scene.add(topLight);
+    // =========================================================
+    // LIGHTING
+    // =========================================================
 
-    // 5. Muscular Developer Group
-    const character = new THREE.Group();
-    character.position.y = -1.6; // Position adjusted lower for realistic frame sizing
-    scene.add(character);
+    const hemi = new THREE.HemisphereLight(
+      0xffffff,
+      0xdde7ff,
+      2.1
+    );
 
-    // Materials
-    const shirtMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b, // Dark gray-blue hoodie
-      roughness: 0.75,
-      metalness: 0.1,
+    scene.add(hemi);
+
+    const keyLight = new THREE.DirectionalLight(
+      0xffffff,
+      1.2
+    );
+
+    keyLight.position.set(4, 6, 7);
+
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(
+      0xffffff,
+      0.45
+    );
+
+    fillLight.position.set(-4, 1, 5);
+
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(
+      0xffffff,
+      0.35
+    );
+
+    rimLight.position.set(0, 3, -5);
+
+    scene.add(rimLight);
+
+    // =========================================================
+    // MATERIALS
+    // =========================================================
+
+    const skinMat = new THREE.MeshToonMaterial({
+      color: 0xc98b68
     });
-    const skinMat = new THREE.MeshStandardMaterial({
-      color: 0xffd1a4, // Skin beige
-      roughness: 0.55,
-    });
-    const hairMat = new THREE.MeshStandardMaterial({
-      color: 0x111827, // Dark black hair
-      roughness: 0.9,
+
+    const hairMat = new THREE.MeshToonMaterial({
+      color: 0x111111,
     });
 
-    // Torso - Reconstructed to show V-taper gym physique (Broad chest, narrow waist)
-    const torsoGroup = new THREE.Group();
-    character.add(torsoGroup);
+    const hoodieMat = new THREE.MeshToonMaterial({
+      color: 0xdadada,
+    });
 
-    // Chest Box (Broad shoulders, chest size)
-    const chestGeo = new THREE.BoxGeometry(1.3, 0.8, 0.75);
-    const chest = new THREE.Mesh(chestGeo, shirtMat);
-    chest.position.y = 1.3;
-    torsoGroup.add(chest);
+    const hoodieDarkMat = new THREE.MeshStandardMaterial({
+      color: 0xbcbcbc,
+      roughness: 1,
+    });
 
-    // Lower Torso / Waist (Tapered)
-    const waistGeo = new THREE.BoxGeometry(0.95, 0.7, 0.7);
-    const waist = new THREE.Mesh(waistGeo, shirtMat);
-    waist.position.y = 0.65;
-    torsoGroup.add(waist);
+    const eyeWhiteMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.25,
+    });
 
-    // Neck (Connecting cylinder)
-    const neckGeo = new THREE.CylinderGeometry(0.18, 0.2, 0.45, 12);
-    const neck = new THREE.Mesh(neckGeo, skinMat);
-    neck.position.y = 1.8;
-    torsoGroup.add(neck);
+    const irisMat = new THREE.MeshStandardMaterial({
+      color: 0x4b2d16,
+      roughness: 0.4,
+    });
 
-    // Shoulder Caps (Gym bouldered shoulders)
-    const shoulderGeo = new THREE.SphereGeometry(0.24, 16, 16);
-    const leftShoulder = new THREE.Mesh(shoulderGeo, shirtMat);
-    leftShoulder.position.set(-0.75, 1.5, 0);
-    torsoGroup.add(leftShoulder);
+    const pupilMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+    });
+
+    const eyeWetMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      roughness: 0,
+      metalness: 0,
+      transmission: 1,
+      thickness: 0.6,
+      transparent: true,
+      opacity: 0.25,
+    });
+
+    const glassesMat = new THREE.MeshStandardMaterial({
+      color: 0x262626,
+      roughness: 0.35,
+      metalness: 0.75,
+    });
+
+    const lensMat = new THREE.MeshPhysicalMaterial({
+      transparent: true,
+      opacity: 0.15,
+      transmission: 1,
+      roughness: 0,
+      thickness: 0.02,
+    });
+
+    const lipMat = new THREE.MeshStandardMaterial({
+      color: 0xa25d45,
+      roughness: 0.7,
+    });
+
+    // =========================================================
+    // ROOT
+    // =========================================================
+
+    const avatar = new THREE.Group();
+
+    scene.add(avatar);
+
+    // =========================================================
+    // BODY
+    // =========================================================
+
+    const bodyGroup = new THREE.Group();
+
+    bodyGroup.position.y = -1.9;
+
+    avatar.add(bodyGroup);
+
+    // torso
+
+    const torso = new THREE.Mesh(
+      new RoundedBoxGeometry(
+        2.25,
+        2.45,
+        1.45,
+        12,
+        0.38
+      ),
+      hoodieMat
+    );
+
+    torso.position.y = -0.1;
+
+    bodyGroup.add(torso);
+
+    // hoodie hood
+
+    const hood = new THREE.Mesh(
+      new THREE.TorusGeometry(0.78, 0.25, 24, 80),
+      hoodieMat
+    );
+
+    hood.rotation.x = Math.PI / 2;
+
+    hood.position.y = 1.05;
+
+    bodyGroup.add(hood);
+
+    // inner hoodie opening
+
+    const hoodInner = new THREE.Mesh(
+      new THREE.TorusGeometry(0.55, 0.12, 24, 80),
+      hoodieDarkMat
+    );
+
+    hoodInner.rotation.x = Math.PI / 2;
+
+    hoodInner.position.set(0, 0.95, 0.3);
+
+    bodyGroup.add(hoodInner);
+
+    // shoulders
+
+    const shoulderGeo = new THREE.SphereGeometry(
+      0.5,
+      32,
+      32
+    );
+
+    const leftShoulder = new THREE.Mesh(
+      shoulderGeo,
+      hoodieMat
+    );
+
+    leftShoulder.scale.set(1.7, 1, 1);
+
+    leftShoulder.position.set(-1.2, 0.7, 0);
+
+    bodyGroup.add(leftShoulder);
 
     const rightShoulder = leftShoulder.clone();
-    rightShoulder.position.x = 0.75;
-    torsoGroup.add(rightShoulder);
 
-    // Head Group (for neck yaw and pitch rotation)
+    rightShoulder.position.x = 1.2;
+
+    bodyGroup.add(rightShoulder);
+
+    // drawstrings
+
+    const stringGeo = new THREE.CylinderGeometry(
+      0.015,
+      0.015,
+      0.7,
+      12
+    );
+
+    const stringMat = new THREE.MeshStandardMaterial({
+      color: 0x9f9f9f,
+      roughness: 1,
+    });
+
+    const leftString = new THREE.Mesh(
+      stringGeo,
+      stringMat
+    );
+
+    leftString.position.set(-0.12, 0.65, 1.1);
+
+    leftString.rotation.z = 0.1;
+
+    bodyGroup.add(leftString);
+
+    const rightString = leftString.clone();
+
+    rightString.position.x = 0.12;
+
+    rightString.rotation.z = -0.1;
+
+    bodyGroup.add(rightString);
+
+    // =========================================================
+    // HEAD GROUP
+    // =========================================================
+
     const headGroup = new THREE.Group();
-    headGroup.position.set(0, 2.2, 0); // Positioned above the neck cylinder
-    character.add(headGroup);
 
-    // Head Sphere
-    const faceGeo = new THREE.SphereGeometry(0.56, 32, 32);
-    const face = new THREE.Mesh(faceGeo, skinMat);
-    face.position.y = 0.3; // head center
-    headGroup.add(face);
+    const faceGlow = new THREE.Mesh(
+      new THREE.SphereGeometry(0.81, 32, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0xffc4a3,
+        transparent: true,
+        opacity: 0.08,
+      })
+    );
 
-    // Glasses
-    const glassesGroup = new THREE.Group();
-    glassesGroup.position.set(0, 0.35, 0.44); // in front of face
-    headGroup.add(glassesGroup);
+    // slightly bigger than head
+    faceGlow.scale.set(1.02, 1.02, 1.02);
 
-    const frameMat = new THREE.MeshStandardMaterial({
-      color: 0x090d16,
-      roughness: 0.3,
-      metalness: 0.8,
-    });
-    const lensMat = new THREE.MeshPhysicalMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.3,
-      roughness: 0.1,
-      transmission: 0.9,
-    });
+    headGroup.add(faceGlow);
 
-    // Left Ring
-    const leftRingGeo = new THREE.TorusGeometry(0.18, 0.025, 8, 24);
-    const leftRing = new THREE.Mesh(leftRingGeo, frameMat);
-    leftRing.position.x = -0.24;
-    glassesGroup.add(leftRing);
+    headGroup.position.y = 0.65;
 
-    // Left Lens
-    const leftLensGeo = new THREE.CylinderGeometry(0.165, 0.165, 0.02, 16);
-    leftLensGeo.rotateX(Math.PI / 2);
-    const leftLens = new THREE.Mesh(leftLensGeo, lensMat);
-    leftLens.position.x = -0.24;
-    glassesGroup.add(leftLens);
+    avatar.add(headGroup);
 
-    // Right Ring
-    const rightRing = leftRing.clone();
-    rightRing.position.x = 0.24;
-    glassesGroup.add(rightRing);
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.7, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.08,
+      })
+    );
 
-    // Right Lens
-    const rightLens = leftLens.clone();
-    rightLens.position.x = 0.24;
-    glassesGroup.add(rightLens);
+    shadow.rotation.x = -Math.PI / 2;
 
-    // Bridge of glasses
-    const bridgeGeo = new THREE.BoxGeometry(0.14, 0.03, 0.03);
-    const bridge = new THREE.Mesh(bridgeGeo, frameMat);
-    bridge.position.y = 0.04;
-    glassesGroup.add(bridge);
+    shadow.position.set(0, -0.85, 0.9);
 
-    // Temples/Arms of glasses going back
-    const templeGeo = new THREE.BoxGeometry(0.02, 0.025, 0.52);
-    const leftTemple = new THREE.Mesh(templeGeo, frameMat);
-    leftTemple.position.set(-0.42, 0.04, -0.24);
-    leftTemple.rotation.y = 0.04;
-    glassesGroup.add(leftTemple);
+    headGroup.add(shadow);
+    // =========================================================
+    // HEAD SHAPE
+    // =========================================================
 
-    const rightTemple = leftTemple.clone();
-    rightTemple.position.x = 0.42;
-    rightTemple.rotation.y = -0.04;
-    glassesGroup.add(rightTemple);
+    const headGeo = new THREE.SphereGeometry(
+      1,
+      64,
+      64
+    );
 
-    // Hair
-    const hairGroup = new THREE.Group();
-    hairGroup.position.y = 0.3; // align with head center
-    headGroup.add(hairGroup);
+    const pos = headGeo.attributes.position;
 
-    // Top hair block
-    const hairTopGeo = new THREE.BoxGeometry(0.86, 0.35, 0.86);
-    const hairTop = new THREE.Mesh(hairTopGeo, hairMat);
-    hairTop.position.set(0, 0.46, -0.1);
-    hairGroup.add(hairTop);
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i);
+      let y = pos.getY(i);
+      let z = pos.getZ(i);
 
-    // Quiff (front hair height)
-    const hairFrontGeo = new THREE.BoxGeometry(0.8, 0.3, 0.35);
-    const hairFront = new THREE.Mesh(hairFrontGeo, hairMat);
-    hairFront.position.set(0, 0.42, 0.38);
-    hairFront.rotation.x = -0.15;
-    hairGroup.add(hairFront);
+      // flatter front face
+      if (z > 0) {
+        z *= 0.76;
+      }
 
-    // Back hair block
-    const hairBackGeo = new THREE.BoxGeometry(0.9, 0.75, 0.35);
-    const hairBack = new THREE.Mesh(hairBackGeo, hairMat);
-    hairBack.position.set(0, 0.02, -0.42);
-    hairGroup.add(hairBack);
+      // cheeks
+      if (y > -0.28 && y < 0.28) {
+        x *= 1.14;
+      }
 
-    // Sides hair
-    const hairLeftGeo = new THREE.BoxGeometry(0.18, 0.55, 0.65);
-    const hairLeft = new THREE.Mesh(hairLeftGeo, hairMat);
-    hairLeft.position.set(-0.48, 0.1, -0.08);
-    hairGroup.add(hairLeft);
+      // jaw taper
+      if (y < -0.18) {
+        x *= 0.78;
+      }
 
-    const hairRight = hairLeft.clone();
-    hairRight.position.x = 0.48;
-    hairGroup.add(hairRight);
+      // forehead
+      if (y > 0.4) {
+        x *= 1.04;
+      }
 
-    // Smile (subtle curved tube or ring)
-    const smileGeo = new THREE.TorusGeometry(0.1, 0.02, 8, 16, Math.PI);
-    const smileMat = new THREE.MeshStandardMaterial({ color: 0xdf705f });
-    const smile = new THREE.Mesh(smileGeo, smileMat);
-    smile.position.set(0, 0.06, 0.49); // raised relative to head bottom
-    smile.rotation.x = Math.PI; // flip to make it smile
-    headGroup.add(smile);
+      // softer chin
+      if (y < -0.55) {
+        y *= 0.92;
+      }
 
-    // Nose
-    const noseGeo = new THREE.ConeGeometry(0.07, 0.14, 4);
-    noseGeo.rotateX(-Math.PI / 6);
-    const nose = new THREE.Mesh(noseGeo, skinMat);
-    nose.position.set(0, 0.22, 0.55);
-    headGroup.add(nose);
+      pos.setXYZ(i, x, y, z);
+    }
 
-    // Eyes
-    const eyeGeo = new THREE.SphereGeometry(0.035, 8, 8);
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x090d16 });
-    const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
-    eyeL.position.set(-0.22, 0.36, 0.48);
-    headGroup.add(eyeL);
+    headGeo.computeVertexNormals();
 
-    const eyeR = eyeL.clone();
-    eyeR.position.x = 0.22;
-    headGroup.add(eyeR);
+    const head = new THREE.Mesh(
+      headGeo,
+      skinMat
+    );
 
-    // Muscular Gym Arms (Biceps and Forearms mapped realistically)
-    // Left Arm Group
-    const leftArmGroup = new THREE.Group();
-    leftArmGroup.position.set(-0.75, 1.5, 0); // hinges from left shoulder
-    character.add(leftArmGroup);
+    head.scale.set(1.18, 1.28, 1.08);
 
-    // Left Bicep Cylinder (Thicker bicep)
-    const bicepGeo = new THREE.CylinderGeometry(0.17, 0.14, 0.8, 12);
-    const leftBicep = new THREE.Mesh(bicepGeo, shirtMat);
-    leftBicep.position.y = -0.4;
-    leftArmGroup.add(leftBicep);
+    headGroup.add(head);
 
-    // Elbow Joint Sphere
-    const jointGeo = new THREE.SphereGeometry(0.14, 12, 12);
-    const leftElbow = new THREE.Mesh(jointGeo, shirtMat);
-    leftElbow.position.y = -0.8;
-    leftArmGroup.add(leftElbow);
+    // =========================================================
+    // EARS
+    // =========================================================
 
-    // Left Forearm Cylinder
-    const forearmGeo = new THREE.CylinderGeometry(0.13, 0.11, 0.7, 12);
-    const leftForearm = new THREE.Mesh(forearmGeo, shirtMat);
-    leftForearm.position.y = -1.15;
-    leftArmGroup.add(leftForearm);
+    const earGeo = new THREE.SphereGeometry(
+      0.18,
+      32,
+      32
+    );
 
-    // Left Hand
-    const handGeo = new THREE.SphereGeometry(0.12, 10, 10);
-    const leftHand = new THREE.Mesh(handGeo, skinMat);
-    leftHand.position.y = -1.55;
-    leftArmGroup.add(leftHand);
+    const leftEar = new THREE.Mesh(
+      earGeo,
+      skinMat
+    );
 
-    // Right Arm Group (Waving and Idle)
-    const rightArmGroup = new THREE.Group();
-    rightArmGroup.position.set(0.75, 1.5, 0); // hinges from right shoulder
-    character.add(rightArmGroup);
+    leftEar.scale.set(0.7, 1, 0.55);
 
-    const rightBicep = new THREE.Mesh(bicepGeo, shirtMat);
-    rightBicep.position.y = -0.4;
-    rightArmGroup.add(rightBicep);
+    leftEar.position.set(-1.05, -0.02, 0);
 
-    const rightElbow = new THREE.Mesh(jointGeo, shirtMat);
-    rightElbow.position.y = -0.8;
-    rightArmGroup.add(rightElbow);
+    headGroup.add(leftEar);
 
-    const rightForearm = new THREE.Mesh(forearmGeo, shirtMat);
-    rightForearm.position.y = -1.15;
-    rightArmGroup.add(rightForearm);
+    const rightEar = leftEar.clone();
 
-    const rightHand = new THREE.Mesh(handGeo, skinMat);
-    rightHand.position.y = -1.55;
-    rightArmGroup.add(rightHand);
+    rightEar.position.x = 1.05;
 
-    // Initial Rotations to look broad and relaxed
-    leftArmGroup.rotation.z = 0.28;  // slightly out to highlight chest width
-    leftArmGroup.rotation.x = 0.15;
-    rightArmGroup.rotation.z = -0.28;
-    rightArmGroup.rotation.x = 0.15;
+    headGroup.add(rightEar);
 
-    setLoading(false);
+    // =========================================================
+    // HAIR
+    // =========================================================
 
-    // Mouse movement listener
-    const handleMouseMove = (event: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      // Normalized between -1 and 1
-      mouse.current.targetX = (x / width) * 2 - 1;
-      mouse.current.targetY = -(y / height) * 2 + 1;
+    const hairGeo = new THREE.SphereGeometry(
+      1.02,
+      64,
+      64
+    );
+
+    const hPos = hairGeo.attributes.position;
+
+    for (let i = 0; i < hPos.count; i++) {
+      let x = hPos.getX(i);
+      let y = hPos.getY(i);
+      let z = hPos.getZ(i);
+
+      // remove lower part
+
+      if (y < 0.12) {
+        z -= 0.5;
+      }
+
+      // flatten top
+
+      if (y > 0.65) {
+        y *= 0.9;
+      }
+
+      // front shape
+
+      if (z > 0.25 && y > 0.15) {
+        z *= 0.96;
+      }
+
+      hPos.setXYZ(i, x, y, z);
+    }
+
+    hairGeo.computeVertexNormals();
+
+    const hair = new THREE.Mesh(
+      hairGeo,
+      hairMat
+    );
+
+    hair.scale.set(1.22, 1.02, 1.08);
+
+    hair.position.y = 0.34;
+
+    headGroup.add(hair);
+
+    // front hair line
+
+    const frontHair = new THREE.Mesh(
+      new RoundedBoxGeometry(
+        1.6,
+        0.22,
+        0.25,
+        8,
+        0.08
+      ),
+      hairMat
+    );
+
+    frontHair.position.set(0, 1.02, 0.58);
+
+    frontHair.rotation.x = 0.12;
+
+    headGroup.add(frontHair);
+
+    const hairChunkGeo = new THREE.SphereGeometry(
+      0.22,
+      24,
+      24
+    );
+
+    for (let i = 0; i < 5; i++) {
+      const chunk = new THREE.Mesh(
+        hairChunkGeo,
+        hairMat
+      );
+
+      chunk.scale.set(1.4, 0.7, 1);
+
+      chunk.position.set(
+        -0.45 + i * 0.22,
+        0.92 - Math.abs(i - 2) * 0.018,
+        0.82
+      );
+
+      chunk.rotation.x = 0.2;
+
+      headGroup.add(chunk);
+    }
+
+    // =========================================================
+    // EYES
+    // =========================================================
+
+    const eyelids: THREE.Mesh[] = [];
+    const pupils: THREE.Mesh[] = [];
+    const irises: THREE.Mesh[] = [];
+
+    const createEye = (x: number) => {
+      const eyeGroup = new THREE.Group();
+
+      eyeGroup.position.set(x, 0.12, 0.62);
+
+      // eye white
+
+      const eyeWhite = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 32, 32),
+        eyeWhiteMat
+      );
+
+      eyeWhite.scale.set(1.32, 0.72, 0.28);
+
+      eyeGroup.add(eyeWhite);
+
+      // iris
+
+      const iris = new THREE.Mesh(
+        new THREE.CircleGeometry(0.065, 32),
+        irisMat
+      );
+
+      iris.position.z = 0.12;
+
+      eyeGroup.add(iris);
+      irises.push(iris);
+
+      // pupil
+
+      const pupil = new THREE.Mesh(
+        new THREE.CircleGeometry(0.018, 32),
+        pupilMat
+      );
+
+      pupil.position.z = 0.23;
+
+      eyeGroup.add(pupil);
+      pupils.push(pupil);
+
+      const corneaGeo = new THREE.SphereGeometry(0.145, 24, 24);
+
+      const cornea = new THREE.Mesh(corneaGeo, eyeWetMat);
+
+      // slightly bigger than eye
+      cornea.scale.set(1.02, 0.92, 0.78);
+
+      // push slightly forward
+      cornea.position.set(0, 0, 0.02);
+
+      eyeGroup.add(cornea);
+
+      // shine
+
+      const shine = new THREE.Mesh(
+        new THREE.CircleGeometry(0.012, 16),
+        new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+        })
+      );
+
+      shine.position.set(0.02, 0.02, 0.09);
+
+      eyeGroup.add(shine);
+
+      // eyelid
+
+      const lid = new THREE.Mesh(
+        new THREE.SphereGeometry(0.17, 32, 32),
+        skinMat
+      );
+
+      lid.scale.set(1.22, 0, 0.5);
+
+      lid.position.z = 0.05;
+
+      eyeGroup.add(lid);
+
+      eyelids.push(lid);
+
+      headGroup.add(eyeGroup);
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    createEye(-0.34);
+    createEye(0.34);
 
-    // Animation variables
-    let clock = new THREE.Clock();
-    let isWaving = false;
-    let waveStartTime = 0;
+    // =========================================================
+    // EYEBROWS
+    // =========================================================
 
-    // Loop
-    let animationFrameId: number;
+    const browGeo = new THREE.TorusGeometry(
+      0.12,
+      0.018,
+      12,
+      32,
+      Math.PI * 0.7
+    );
+
+    const leftBrow = new THREE.Mesh(
+      browGeo,
+      hairMat
+    );
+
+    leftBrow.rotation.z = 0.2;
+
+    leftBrow.position.set(-0.35, 0.48, 0.8);
+
+    headGroup.add(leftBrow);
+
+    const rightBrow = leftBrow.clone();
+
+    rightBrow.rotation.z = -0.2;
+
+    rightBrow.position.x = 0.35;
+
+    headGroup.add(rightBrow);
+
+    // =========================================================
+    // NOSE
+    // =========================================================
+
+    const nose = new THREE.Mesh(
+      new THREE.CapsuleGeometry(
+        0.085,
+        0.16,
+        8,
+        16
+      ),
+      skinMat
+    );
+
+    nose.rotation.x = Math.PI / 2;
+
+    nose.position.set(0, -0.02, 0.88);
+
+    nose.scale.z = 0.8;
+
+    headGroup.add(nose);
+
+    const noseShadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.12, 24),
+      new THREE.MeshBasicMaterial({
+        color: 0x8a5a3a,
+        transparent: true,
+        opacity: 0.12,
+      })
+    );
+
+    noseShadow.position.set(0, -0.18, 0.83);
+
+    headGroup.add(noseShadow);
+
+    // =========================================================
+    // MOUTH
+    // =========================================================
+
+    const smileCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.16, 0, 0),
+      new THREE.Vector3(0, -0.05, 0.02),
+      new THREE.Vector3(0.16, 0, 0),
+    ]);
+
+    const smileGeo = new THREE.TubeGeometry(
+      smileCurve,
+      32,
+      0.015,
+      8,
+      false
+    );
+
+    const smile = new THREE.Mesh(
+      smileGeo,
+      lipMat
+    );
+
+    smile.position.set(0, -0.42, 0.88);
+
+    headGroup.add(smile);
+
+    const neckShadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.72, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.08,
+      })
+    );
+
+    neckShadow.rotation.x = -Math.PI / 2;
+
+    neckShadow.position.set(0, -0.88, 0.9);
+
+    headGroup.add(neckShadow);
+
+    // =========================================================
+    // GLASSES
+    // =========================================================
+
+    const glasses = new THREE.Group();
+
+    glasses.position.z = 0.02;
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x2a2a2a,
+      roughness: 0.3,
+      metalness: 0.6,
+      transparent: true,
+      opacity: 0.9,
+    });
+
+    const glassesLensMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.08,
+      transmission: 1,
+      roughness: 0,
+      thickness: 0.01,
+    });
+
+    // ---------- LEFT FRAME ----------
+
+    const leftFrameTop = new THREE.Mesh(
+      new THREE.BoxGeometry(0.42, 0.018, 0.01),
+      frameMat
+    );
+
+    leftFrameTop.position.set(-0.34, 0.23, 0.92);
+
+    glasses.add(leftFrameTop);
+
+    const leftFrameBottom = leftFrameTop.clone();
+
+    leftFrameBottom.position.y = 0.01;
+
+    glasses.add(leftFrameBottom);
+
+    const leftFrameLeft = new THREE.Mesh(
+      new THREE.BoxGeometry(0.018, 0.22, 0.01),
+      frameMat
+    );
+
+    leftFrameLeft.position.set(-0.54, 0.12, 0.92);
+
+    glasses.add(leftFrameLeft);
+
+    const leftFrameRight = leftFrameLeft.clone();
+
+    leftFrameRight.position.x = -0.14;
+
+    glasses.add(leftFrameRight);
+
+    // ---------- RIGHT FRAME ----------
+
+    const rightFrameTop = leftFrameTop.clone();
+
+    rightFrameTop.position.x = 0.34;
+
+    glasses.add(rightFrameTop);
+
+    const rightFrameBottom = leftFrameBottom.clone();
+
+    rightFrameBottom.position.x = 0.34;
+
+    glasses.add(rightFrameBottom);
+
+    const rightFrameLeft = leftFrameLeft.clone();
+
+    rightFrameLeft.position.x = 0.14;
+
+    glasses.add(rightFrameLeft);
+
+    const rightFrameRight = leftFrameRight.clone();
+
+    rightFrameRight.position.x = 0.54;
+
+    glasses.add(rightFrameRight);
+
+    // ---------- TRANSPARENT LENSES ----------
+
+    const lensGeo = new THREE.PlaneGeometry(
+      0.38,
+      0.18
+    );
+
+    const glareGeo = new THREE.PlaneGeometry(0.38, 0.18);
+
+    const glareMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.05,
+    });
+
+    const glare = new THREE.Mesh(glareGeo, glareMat);
+
+    // slight diagonal highlight
+    glare.rotation.z = 0.4;
+
+    glare.position.z += 0.001;
+
+    glasses.add(glare);
+
+    const leftLens = new THREE.Mesh(
+      lensGeo,
+      glassesLensMat
+    );
+
+    leftLens.position.set(-0.34, 0.12, 0.925);
+
+    glasses.add(leftLens);
+
+    const rightLens = leftLens.clone();
+
+    rightLens.position.x = 0.34;
+
+    glasses.add(rightLens);
+
+    // ---------- BRIDGE ----------
+
+    const bridge = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.012, 0.01),
+      frameMat
+    );
+
+    bridge.position.set(0, 0.12, 0.92);
+
+    glasses.add(bridge);
+
+    // ---------- TEMPLES ----------
+
+    const templeGeo = new THREE.CylinderGeometry(
+      0.006,
+      0.006,
+      0.75,
+      8
+    );
+
+    templeGeo.rotateZ(Math.PI / 2);
+
+    // left temple
+
+    const leftTemple = new THREE.Mesh(
+      templeGeo,
+      frameMat
+    );
+
+    leftTemple.position.set(-0.72, 0.12, 0.76);
+
+    leftTemple.rotation.y = -0.28;
+
+    glasses.add(leftTemple);
+
+    // right temple
+
+    const rightTemple = leftTemple.clone();
+
+    rightTemple.position.x = 0.72;
+
+    rightTemple.rotation.y = 0.28;
+
+    glasses.add(rightTemple);
+
+    // ---------- NOSE PADS ----------
+
+    const padMat = new THREE.MeshBasicMaterial({
+      color: 0xd8d8d8,
+    });
+
+    const padGeo = new THREE.SphereGeometry(
+      0.014,
+      12,
+      12
+    );
+
+    const leftPad = new THREE.Mesh(
+      padGeo,
+      padMat
+    );
+
+    leftPad.scale.set(1, 0.5, 0.5);
+
+    leftPad.position.set(-0.05, 0.05, 0.88);
+
+    glasses.add(leftPad);
+
+    const rightPad = leftPad.clone();
+
+    rightPad.position.x = 0.05;
+
+    glasses.add(rightPad);
+
+    // subtle realism tilt
+
+    glasses.rotation.z = 0.01;
+
+    headGroup.add(glasses);
+
+    // =========================================================
+    // MOUSE TRACKING
+    // =========================================================
+
+    const mouse = {
+      x: 0,
+      y: 0,
+    };
+
+    const target = {
+      x: 0,
+      y: 0,
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      target.x = (e.clientX / window.innerWidth) * 2 - 1;
+
+      target.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    };
+
+    window.addEventListener(
+      "mousemove",
+      onMouseMove
+    );
+
+    // =========================================================
+    // BLINK SYSTEM
+    // =========================================================
+
+    let blinking = false;
+
+    let blinkStart = 0;
+
+    // =========================================================
+    // ANIMATION
+    // =========================================================
+
+    const clock = new THREE.Clock();
+
+    let frameId: number;
+
     const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
+      frameId = requestAnimationFrame(animate);
 
-      const elapsedTime = clock.getElapsedTime();
+      const t = clock.getElapsedTime();
 
-      // Mouse tracking interpolation (lerp)
-      mouse.current.x += (mouse.current.targetX - mouse.current.x) * 0.08;
-      mouse.current.y += (mouse.current.targetY - mouse.current.y) * 0.08;
+      // smooth mouse movement
 
-      // 1. LIMIT NECK ROTATION - Clamp rotation strictly to realistic human limits
-      // Max Y (yaw) rotation: 40 degrees (0.7 radians) left or right
-      // Max X (pitch) rotation: 25 degrees (0.43 radians) up or down
-      const maxNeckYaw = 0.65;
-      const maxNeckPitch = 0.38;
-      
-      headGroup.rotation.y = mouse.current.x * maxNeckYaw;
-      headGroup.rotation.x = -mouse.current.y * maxNeckPitch;
+      mouse.x += (target.x - mouse.x) * 0.05;
 
-      // 2. Idle breathing animation (Subtle torso scaling and vertical drift)
-      const breathing = Math.sin(elapsedTime * 2.0) * 0.025;
-      character.position.y = -1.6 + breathing;
-      
-      // Expand/contract chest slightly with breathing
-      chest.scale.set(1 + breathing * 0.4, 1, 1 + breathing * 0.3);
+      mouse.y += (target.y - mouse.y) * 0.05;
 
-      // Relaxed idle shoulder drifting
-      leftArmGroup.rotation.z = 0.22 + Math.sin(elapsedTime * 1.2) * 0.02;
-      if (!isWaving) {
-        rightArmGroup.rotation.z = -0.22 - Math.sin(elapsedTime * 1.2) * 0.02;
-        rightArmGroup.rotation.x = 0.15;
-        rightArmGroup.rotation.y = 0;
+      // head movement
+
+      const rawPitch = mouse.y * 0.3;
+      headGroup.rotation.x = Math.max(-0.26, Math.min(0.26, rawPitch));
+
+      headGroup.rotation.x = mouse.y * 0.12;
+
+      const eyeOffsetX = mouse.x * 0.012;
+      const eyeOffsetY = mouse.y * 0.008;
+
+      pupils.forEach((pupil) => {
+        pupil.position.x = eyeOffsetX;
+        pupil.position.y = eyeOffsetY;
+      });
+
+      irises.forEach((iris) => {
+        iris.position.x = eyeOffsetX * 0.7;
+        iris.position.y = eyeOffsetY * 0.7;
+      });
+
+      // tiny eye moist shimmer
+      const shimmer = 0.5 + Math.sin(t * 3) * 0.5;
+
+      // body sway
+
+      avatar.rotation.y =
+        Math.sin(t * 0.5) * 0.018;
+
+      // floating
+
+      avatar.position.y =
+        Math.sin(t * 1.5) * 0.05;
+
+      // breathing
+
+      bodyGroup.scale.y =
+        1 + Math.sin(t * 2) * 0.015;
+
+      // blink trigger
+
+      if (!blinking && Math.random() < 0.003) {
+        blinking = true;
+
+        blinkStart = t;
       }
 
-      // Gentle floating of the character
-      character.position.x = Math.sin(elapsedTime * 0.6) * 0.06;
+      // blinking
 
-      // 3. Procedural Waving Animation
-      if (!isWaving && Math.random() < 0.004 && elapsedTime > 4) {
-        isWaving = true;
-        waveStartTime = elapsedTime;
-      }
+      if (blinking) {
+        const p = t - blinkStart;
 
-      if (isWaving) {
-        const waveProgress = elapsedTime - waveStartTime;
-        if (waveProgress < 2.5) {
-          // Raise arm up
-          rightArmGroup.rotation.z = -2.0;
-          rightArmGroup.rotation.x = 0.4;
-          // Wave forearm back and forth
-          rightArmGroup.rotation.y = Math.sin(waveProgress * 12) * 0.35;
+        let scale = 0;
+
+        if (p < 0.08) {
+          scale = p / 0.08;
+        } else if (p < 0.16) {
+          scale = 1 - (p - 0.08) / 0.08;
         } else {
-          isWaving = false;
+          blinking = false;
         }
+
+        eyelids.forEach((lid) => {
+          lid.scale.y = scale;
+        });
       }
+
+      headGroup.rotation.z =
+        Math.sin(t * 0.7) * 0.015;
+
+      renderer.sortObjects = true;
 
       renderer.render(scene, camera);
+
     };
 
     animate();
 
-    // Resize Handler
-    const handleResize = () => {
-      const newWidth = container.clientWidth;
-      const newHeight = container.clientHeight || 400;
+    // =========================================================
+    // RESIZE
+    // =========================================================
 
-      camera.aspect = newWidth / newHeight;
+    const onResize = () => {
+      if (!mountRef.current) return;
+
+      const w = mountRef.current.clientWidth;
+
+      camera.aspect = w / height;
+
       camera.updateProjectionMatrix();
 
-      renderer.setSize(newWidth, newHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(w, height);
     };
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", onResize);
 
-    // Clean up
+    // =========================================================
+    // CLEANUP
+    // =========================================================
+
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("resize", handleResize);
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-      scene.clear();
+      cancelAnimationFrame(frameId);
+
+      window.removeEventListener(
+        "mousemove",
+        onMouseMove
+      );
+
+      window.removeEventListener(
+        "resize",
+        onResize
+      );
+
       renderer.dispose();
+
+      scene.clear();
+
+      if (
+        mountRef.current &&
+        renderer.domElement.parentNode
+      ) {
+        mountRef.current.removeChild(
+          renderer.domElement
+        );
+      }
     };
-  }, [isClient, webglSupported]);
-
-  // Handle server-side render or fallback
-  if (!isClient) {
-    return <FallbackAvatar loading={false} />;
-  }
-
-  if (!webglSupported) {
-    return <FallbackAvatar loading={false} />;
-  }
+  }, []);
 
   return (
-    <div className="relative w-full h-[400px] flex items-center justify-center">
-      {loading && <FallbackAvatar loading={true} />}
+    <div className="w-full h-[500px] flex items-center justify-center">
       <div
-        ref={containerRef}
-        className="w-full h-full cursor-pointer relative"
-        title="Interact with mouse. Muscular torso, neck rotation locked to a realistic range."
+        ref={mountRef}
+        className="w-full h-full"
       />
-      {/* Decorative dashboard stats for Three.js view */}
-      <div className="absolute bottom-4 left-4 bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1 text-[10px] font-mono text-slate-400 backdrop-blur pointer-events-none select-none">
-        <span className="text-emerald-400">●</span> 3D_PHYSICAL_ENGINE: ACTIVE | LIMIT_AXIS: LOCK_XY
-      </div>
     </div>
   );
 };
 
-const FallbackAvatar: React.FC<{ loading: boolean }> = ({ loading }) => {
-  return (
-    <div className="w-full h-[400px] flex items-center justify-center p-4">
-      <div className="relative w-72 h-80 rounded-2xl glass-panel glow-blue overflow-hidden flex flex-col items-center justify-center border border-slate-800/80 shadow-2xl p-6 group">
-        {/* Glow behind */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full bg-brand-blue/10 blur-3xl group-hover:bg-brand-blue/20 transition-colors duration-500" />
-        
-        {/* Avatar Graphic Silhouette */}
-        <div className="relative w-32 h-32 rounded-full border border-slate-700/60 flex items-center justify-center mb-6 bg-slate-900/60 backdrop-blur shadow-inner">
-          <svg
-            className="w-20 h-20 text-slate-500 group-hover:text-brand-light transition-colors duration-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-          <span className="absolute bottom-1 right-2 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-slate-900"></span>
-          </span>
-        </div>
-
-        {/* Text descriptions */}
-        <div className="text-center z-10">
-          <h4 className="text-lg font-mono font-semibold text-white tracking-wider">
-            {loading ? "INITIALIZING SCENE..." : "HARSH PANDYA"}
-          </h4>
-          <p className="text-xs font-mono text-slate-400 mt-1.5 uppercase tracking-widest">
-            {loading ? "COMPILE_SHADERS: OK" : "dev_avatar: idle"}
-          </p>
-          <div className="mt-4 flex gap-1 justify-center">
-            <span className="h-1 w-3 rounded bg-brand-blue"></span>
-            <span className="h-1 w-1.5 rounded bg-brand-purple"></span>
-            <span className="h-1 w-1.5 rounded bg-brand-cyan"></span>
-          </div>
-        </div>
-
-        <div className="absolute bottom-2 left-3 right-3 flex justify-between font-mono text-[9px] text-slate-600 pointer-events-none">
-          <span>PORT: 3000</span>
-          <span>SYS_RES: READY</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+export default Avatar3D;

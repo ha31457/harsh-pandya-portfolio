@@ -43,7 +43,7 @@ export const Footer: React.FC = () => {
             
             <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-850 px-2 py-1 rounded">
               <ShieldAlert size={10} className="text-brand-purple" />
-              <span className="text-slate-400">REGION: ap-south-1</span>
+              <span className="text-slate-400">REGION: India</span>
             </div>
           </div>
 

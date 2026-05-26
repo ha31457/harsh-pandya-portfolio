@@ -10,6 +10,7 @@ interface GlassCardProps {
   hoverEffect?: boolean;
   onClick?: () => void;
   id?: string;
+  noPadding?: boolean;
 }
 
 export const GlassCard: React.FC<GlassCardProps> = ({
@@ -19,6 +20,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   hoverEffect = true,
   onClick,
   id,
+  noPadding = false,
 }) => {
   const glowClasses = {
     blue: "hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] hover:border-brand-blue/30",
@@ -28,7 +30,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   };
 
   const baseClasses = `
-    glass-panel rounded-xl p-6 transition-all duration-300 relative overflow-hidden
+    glass-panel rounded-xl ${noPadding ? "" : "p-6"} transition-all duration-300 relative overflow-hidden
     ${hoverEffect ? "hover:-translate-y-1 hover:bg-slate-900/50" : ""}
     ${glowColor !== "none" && hoverEffect ? glowClasses[glowColor] : ""}
     ${className}

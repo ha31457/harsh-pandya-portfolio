@@ -329,7 +329,7 @@ export const SystemsSimulator: React.FC = () => {
           </GlassCard>
 
           {/* Quick Metrics */}
-          <GlassCard className="bg-slate-900/40 p-4 flex flex-col justify-between" hoverEffect={false}>
+          <GlassCard className="bg-slate-900/40 p-4 flex flex-col justify-between" hoverEffect={false} noPadding={true}>
             <div className="flex items-center gap-2 text-brand-light font-mono text-xs mb-2">
               <Gauge size={14} />
               <span>LIVE METRICS MONITOR</span>
@@ -363,182 +363,184 @@ export const SystemsSimulator: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Request Pipeline */}
           <div className="lg:col-span-2 flex flex-col gap-6 relative">
-            <GlassCard className="bg-slate-900/20 border-slate-800/80 p-8 min-h-[500px] flex flex-col justify-between" hoverEffect={false}>
+            <GlassCard className="bg-slate-900/20 border-slate-800/80 p-4 sm:p-6 md:p-8 min-h-[500px] flex flex-col justify-between" hoverEffect={false} noPadding={true}>
               
               {/* Architecture Canvas (Simulated Node Connections) */}
-              <div className="relative w-full h-[320px] border border-slate-800/40 rounded-xl bg-slate-950/70 overflow-hidden p-6 flex flex-col justify-between">
-                {/* SVG connection lines with animation */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                  {/* Client -> Gateway */}
-                  <line x1="50" y1="160" x2="190" y2="160" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" />
-                  
-                  {/* Gateway -> Server A */}
-                  <path d="M 230,160 Q 280,75 350,75" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" />
-                  {/* Gateway -> Server B */}
-                  <path d="M 230,160 Q 280,245 350,245" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" />
+              <div className="w-full min-w-0 border border-slate-800/40 rounded-xl bg-slate-950/70 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-slate-800">
+                <div className="relative w-[700px] h-[320px] p-6 flex flex-col justify-between">
+                  {/* SVG connection lines with animation */}
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                    {/* Client -> Gateway */}
+                    <line x1="48" y1="160" x2="160" y2="160" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" />
+                    
+                    {/* Gateway -> Server A */}
+                    <path d="M 200,160 Q 240,75 300,75" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" />
+                    {/* Gateway -> Server B */}
+                    <path d="M 200,160 Q 240,245 300,245" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" />
 
-                  {/* Servers -> Cache (Redis) */}
-                  <path d="M 430,75 Q 480,75 510,120" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
-                  <path d="M 430,245 Q 480,245 510,180" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
+                    {/* Servers -> Cache (Redis) */}
+                    <path d="M 340,75 Q 380,75 410,120" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
+                    <path d="M 340,245 Q 380,245 410,180" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
 
-                  {/* Cache -> DB */}
-                  <path d="M 540,140 Q 580,70 630,70" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
+                    {/* Cache -> DB */}
+                    <path d="M 472,140 Q 510,70 560,70" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
 
-                  {/* DB Sync (Replica) */}
-                  <path d="M 680,185 Q 680,210 680,230" fill="none" stroke="#1e293b" strokeWidth="1.5" strokeDasharray="3 3" />
+                    {/* DB Sync (Replica) */}
+                    <path d="M 588,120 Q 588,152 588,185" fill="none" stroke="#1e293b" strokeWidth="1.5" strokeDasharray="3 3" />
 
-                  {/* Pulsing request animations */}
-                  {activeRequests.map((req) => {
-                    let cx = 0;
-                    let cy = 0;
+                    {/* Pulsing request animations */}
+                    {activeRequests.map((req) => {
+                      let cx = 0;
+                      let cy = 0;
 
-                    if (req.step === "client") {
-                      cx = 50; cy = 160;
-                    } else if (req.step === "lb") {
-                      cx = 190; cy = 160;
-                    } else if (req.step === "server") {
-                      cx = 350;
-                      cy = req.targetServer === "A" ? 75 : 245;
-                    } else if (req.step === "cache") {
-                      cx = 510; cy = 150;
-                    } else if (req.step === "db") {
-                      cx = 670; cy = 70;
-                    }
+                      if (req.step === "client") {
+                        cx = 48; cy = 160;
+                      } else if (req.step === "lb") {
+                        cx = 160; cy = 160;
+                      } else if (req.step === "server") {
+                        cx = 300;
+                        cy = req.targetServer === "A" ? 75 : 245;
+                      } else if (req.step === "cache") {
+                        cx = 436; cy = 150;
+                      } else if (req.step === "db") {
+                        cx = 588; cy = 70;
+                      }
 
-                    if (cx === 0 && cy === 0) return null;
+                      if (cx === 0 && cy === 0) return null;
 
-                    return (
+                      return (
+                        <circle
+                          key={req.id}
+                          cx={cx}
+                          cy={cy}
+                          r="6"
+                          fill={req.color}
+                          className="transition-all duration-300 ease-out"
+                          style={{
+                            filter: `drop-shadow(0 0 6px ${req.color})`,
+                          }}
+                        />
+                      );
+                    })}
+
+                    {/* DB Replication pulse */}
+                    {activeRequests.some((r) => r.step === "db") && replicaOnline && (
                       <circle
-                        key={req.id}
-                        cx={cx}
-                        cy={cy}
-                        r="6"
-                        fill={req.color}
-                        className="transition-all duration-300 ease-out"
-                        style={{
-                          filter: `drop-shadow(0 0 6px ${req.color})`,
-                        }}
+                        cx="588"
+                        cy="150"
+                        r="4"
+                        fill="#a855f7"
+                        className="animate-bounce"
+                        style={{ filter: "drop-shadow(0 0 4px #a855f7)" }}
                       />
-                    );
-                  })}
+                    )}
+                  </svg>
 
-                  {/* DB Replication pulse */}
-                  {activeRequests.some((r) => r.step === "db") && replicaOnline && (
-                    <circle
-                      cx="680"
-                      cy="210"
-                      r="4"
-                      fill="#a855f7"
-                      className="animate-bounce"
-                      style={{ filter: "drop-shadow(0 0 4px #a855f7)" }}
-                    />
-                  )}
-                </svg>
-
-                {/* 1. Client Node */}
-                <div className="absolute left-2 top-[130px] flex flex-col items-center gap-1">
-                  <div className="h-14 w-16 bg-slate-900/90 border border-slate-700 rounded-lg flex items-center justify-center font-mono text-xs text-white shadow-lg">
-                    Client
+                  {/* 1. Client Node */}
+                  <div className="absolute left-[16px] top-[130px] flex flex-col items-center gap-1">
+                    <div className="h-14 w-16 bg-slate-900/90 border border-slate-700 rounded-lg flex items-center justify-center font-mono text-xs text-white shadow-lg">
+                      Client
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-500">req_origin</span>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500">req_origin</span>
-                </div>
 
-                {/* 2. Spring API Gateway Node */}
-                <div className="absolute left-[160px] top-[110px] flex flex-col items-center gap-1">
-                  <div className="h-24 w-20 bg-slate-900/90 border border-brand-blue rounded-lg flex flex-col items-center justify-center font-mono p-2 shadow-lg glow-blue/20">
-                    <Radio className="text-brand-blue mb-2 animate-pulse" size={18} />
-                    <span className="text-[9px] text-white font-bold text-center">Spring Gateway</span>
+                  {/* 2. Spring API Gateway Node */}
+                  <div className="absolute left-[120px] top-[110px] flex flex-col items-center gap-1">
+                    <div className="h-24 w-20 bg-slate-900/90 border border-brand-blue rounded-lg flex flex-col items-center justify-center font-mono p-2 shadow-lg glow-blue/20">
+                      <Radio className="text-brand-blue mb-2 animate-pulse" size={18} />
+                      <span className="text-[9px] text-white font-bold text-center">Spring Gateway</span>
+                    </div>
+                    <span className="text-[9px] font-mono text-slate-500">API Gateway</span>
                   </div>
-                  <span className="text-[9px] font-mono text-slate-500">API Gateway</span>
-                </div>
 
-                {/* 3. Server A Node */}
-                <div className={`absolute left-[330px] top-[25px] flex flex-col items-center gap-1 transition-all`}>
-                  <button
-                    onClick={() => {
-                      setServerAOnline(!serverAOnline);
-                      addLog(`Operator toggled API Server A to: ${!serverAOnline ? "ONLINE" : "OFFLINE"}`);
-                    }}
-                    className={`h-24 w-20 rounded-lg border flex flex-col items-center justify-center font-mono p-2 shadow-lg cursor-pointer transition-all ${
-                      serverAOnline 
-                        ? "bg-slate-900/90 border-slate-700 hover:border-brand-blue text-slate-200" 
-                        : "bg-rose-950/20 border-rose-900 text-rose-500 hover:bg-rose-900/20"
-                    }`}
-                  >
-                    <Server size={18} className={serverAOnline ? "text-emerald-400" : "text-rose-500"} />
-                    <span className="text-[9px] font-bold mt-1">API Node A</span>
-                    <span className="text-[8px] font-semibold mt-1 opacity-70">
-                      {serverAOnline ? "ONLINE" : "CRASHED"}
-                    </span>
-                  </button>
-                </div>
-
-                {/* 4. Server B Node */}
-                <div className="absolute left-[330px] top-[195px] flex flex-col items-center gap-1">
-                  <button
-                    onClick={() => {
-                      setServerBOnline(!serverBOnline);
-                      addLog(`Operator toggled API Server B to: ${!serverBOnline ? "ONLINE" : "OFFLINE"}`);
-                    }}
-                    className={`h-24 w-20 rounded-lg border flex flex-col items-center justify-center font-mono p-2 shadow-lg cursor-pointer transition-all ${
-                      serverBOnline 
-                        ? "bg-slate-900/90 border-slate-700 hover:border-brand-blue text-slate-200" 
-                        : "bg-rose-950/20 border-rose-900 text-rose-500 hover:bg-rose-900/20"
-                    }`}
-                  >
-                    <Server size={18} className={serverBOnline ? "text-emerald-400" : "text-rose-500"} />
-                    <span className="text-[9px] font-bold mt-1">API Node B</span>
-                    <span className="text-[8px] font-semibold mt-1 opacity-70">
-                      {serverBOnline ? "ONLINE" : "CRASHED"}
-                    </span>
-                  </button>
-                </div>
-
-                {/* 5. Redis Cache Node */}
-                <div className="absolute left-[480px] top-[105px] flex flex-col items-center gap-1">
-                  <button
-                    onClick={() => {
-                      setCacheOnline(!cacheOnline);
-                      addLog(`Operator toggled Redis Cache node to: ${!cacheOnline ? "ONLINE" : "OFFLINE"}`);
-                    }}
-                    className={`h-24 w-18 rounded-lg border flex flex-col items-center justify-center font-mono p-2 shadow-lg cursor-pointer transition-all ${
-                      cacheOnline 
-                        ? "bg-slate-900/90 border-brand-cyan/40 text-slate-200 hover:bg-slate-900" 
-                        : "bg-rose-950/20 border-rose-900 text-rose-500 hover:bg-rose-900/20"
-                    }`}
-                  >
-                    <Layers size={18} className={cacheOnline ? "text-brand-cyan animate-pulse" : "text-rose-500"} />
-                    <span className="text-[9px] font-bold mt-1">Redis</span>
-                    <span className="text-[8px] opacity-70">{cacheOnline ? "CACHE" : "DOWN"}</span>
-                  </button>
-                </div>
-
-                {/* 6. Database (Primary) */}
-                <div className="absolute left-[620px] top-[30px] flex flex-col items-center gap-1">
-                  <div className="h-20 w-24 bg-slate-900/90 border border-slate-700 rounded-lg flex flex-col items-center justify-center font-mono p-2 shadow-lg">
-                    <Database className="text-brand-light" size={16} />
-                    <span className="text-[9px] font-bold mt-1 text-white">Postgres (Pri)</span>
-                    <span className="text-[8px] text-emerald-400 font-mono mt-0.5">WRITE / READ</span>
+                  {/* 3. Server A Node */}
+                  <div className={`absolute left-[260px] top-[25px] flex flex-col items-center gap-1 transition-all`}>
+                    <button
+                      onClick={() => {
+                        setServerAOnline(!serverAOnline);
+                        addLog(`Operator toggled API Server A to: ${!serverAOnline ? "ONLINE" : "OFFLINE"}`);
+                      }}
+                      className={`h-24 w-20 rounded-lg border flex flex-col items-center justify-center font-mono p-2 shadow-lg cursor-pointer transition-all ${
+                        serverAOnline 
+                          ? "bg-slate-900/90 border-slate-700 hover:border-brand-blue text-slate-200" 
+                          : "bg-rose-950/20 border-rose-900 text-rose-500 hover:bg-rose-900/20"
+                      }`}
+                    >
+                      <Server size={18} className={serverAOnline ? "text-emerald-400" : "text-rose-500"} />
+                      <span className="text-[9px] font-bold mt-1">API Node A</span>
+                      <span className="text-[8px] font-semibold mt-1 opacity-70">
+                        {serverAOnline ? "ONLINE" : "CRASHED"}
+                      </span>
+                    </button>
                   </div>
-                </div>
 
-                {/* 7. Database (Replica Sync) */}
-                <div className="absolute left-[620px] top-[195px] flex flex-col items-center gap-1">
-                  <button
-                    onClick={() => {
-                      setReplicaOnline(!replicaOnline);
-                      addLog(`Operator toggled Database Read-Replica to: ${!replicaOnline ? "ONLINE" : "OFFLINE"}`);
-                    }}
-                    className={`h-20 w-24 rounded-lg border flex flex-col items-center justify-center font-mono p-2 shadow-lg cursor-pointer transition-all ${
-                      replicaOnline 
-                        ? "bg-slate-900/90 border-slate-700 hover:border-brand-purple text-slate-200" 
-                        : "bg-rose-950/20 border-rose-900 text-rose-500 hover:bg-rose-900/20"
-                    }`}
-                  >
-                    <Database className={replicaOnline ? "text-brand-purple" : "text-rose-500"} size={16} />
-                    <span className="text-[9px] font-bold mt-1">Postgres (Repl)</span>
-                    <span className="text-[8px] opacity-70">{replicaOnline ? "READ_ONLY" : "DOWN"}</span>
-                  </button>
+                  {/* 4. Server B Node */}
+                  <div className="absolute left-[260px] top-[195px] flex flex-col items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setServerBOnline(!serverBOnline);
+                        addLog(`Operator toggled API Server B to: ${!serverBOnline ? "ONLINE" : "OFFLINE"}`);
+                      }}
+                      className={`h-24 w-20 rounded-lg border flex flex-col items-center justify-center font-mono p-2 shadow-lg cursor-pointer transition-all ${
+                        serverBOnline 
+                          ? "bg-slate-900/90 border-slate-700 hover:border-brand-blue text-slate-200" 
+                          : "bg-rose-950/20 border-rose-900 text-rose-500 hover:bg-rose-900/20"
+                      }`}
+                    >
+                      <Server size={18} className={serverBOnline ? "text-emerald-400" : "text-rose-500"} />
+                      <span className="text-[9px] font-bold mt-1">API Node B</span>
+                      <span className="text-[8px] font-semibold mt-1 opacity-70">
+                        {serverBOnline ? "ONLINE" : "CRASHED"}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* 5. Redis Cache Node */}
+                  <div className="absolute left-[400px] top-[105px] flex flex-col items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setCacheOnline(!cacheOnline);
+                        addLog(`Operator toggled Redis Cache node to: ${!cacheOnline ? "ONLINE" : "OFFLINE"}`);
+                      }}
+                      className={`h-24 w-18 rounded-lg border flex flex-col items-center justify-center font-mono p-2 shadow-lg cursor-pointer transition-all ${
+                        cacheOnline 
+                          ? "bg-slate-900/90 border-brand-cyan/40 text-slate-200 hover:bg-slate-900" 
+                          : "bg-rose-950/20 border-rose-900 text-rose-500 hover:bg-rose-900/20"
+                      }`}
+                    >
+                      <Layers size={18} className={cacheOnline ? "text-brand-cyan animate-pulse" : "text-rose-500"} />
+                      <span className="text-[9px] font-bold mt-1">Redis</span>
+                      <span className="text-[8px] opacity-70">{cacheOnline ? "CACHE" : "DOWN"}</span>
+                    </button>
+                  </div>
+
+                  {/* 6. Database (Primary) */}
+                  <div className="absolute left-[540px] top-[30px] flex flex-col items-center gap-1">
+                    <div className="h-20 w-24 bg-slate-900/90 border border-slate-700 rounded-lg flex flex-col items-center justify-center font-mono p-2 shadow-lg">
+                      <Database className="text-brand-light" size={16} />
+                      <span className="text-[9px] font-bold mt-1 text-white">Postgres (Pri)</span>
+                      <span className="text-[8px] text-emerald-400 font-mono mt-0.5">WRITE / READ</span>
+                    </div>
+                  </div>
+
+                  {/* 7. Database (Replica Sync) */}
+                  <div className="absolute left-[540px] top-[195px] flex flex-col items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setReplicaOnline(!replicaOnline);
+                        addLog(`Operator toggled Database Read-Replica to: ${!replicaOnline ? "ONLINE" : "OFFLINE"}`);
+                      }}
+                      className={`h-20 w-24 rounded-lg border flex flex-col items-center justify-center font-mono p-2 shadow-lg cursor-pointer transition-all ${
+                        replicaOnline 
+                          ? "bg-slate-900/90 border-slate-700 hover:border-brand-purple text-slate-200" 
+                          : "bg-rose-950/20 border-rose-900 text-rose-500 hover:bg-rose-900/20"
+                      }`}
+                    >
+                      <Database className={replicaOnline ? "text-brand-purple" : "text-rose-500"} size={16} />
+                      <span className="text-[9px] font-bold mt-1">Postgres (Repl)</span>
+                      <span className="text-[8px] opacity-70">{replicaOnline ? "READ_ONLY" : "DOWN"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -569,7 +571,7 @@ export const SystemsSimulator: React.FC = () => {
 
           {/* Event Driven Pipeline: Kafka Broker Queue */}
           <div className="flex flex-col gap-6">
-            <GlassCard className="bg-slate-900/20 border-slate-800/80 p-6 flex flex-col justify-between h-full" hoverEffect={false}>
+            <GlassCard className="bg-slate-900/20 border-slate-800/80 p-4 sm:p-6 flex flex-col justify-between h-full" hoverEffect={false} noPadding={true}>
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">

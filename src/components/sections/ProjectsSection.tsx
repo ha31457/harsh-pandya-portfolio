@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { GlassCard } from "../ui/GlassCard";
 import { SectionHeader } from "../ui/SectionHeader";
 import { Badge } from "../ui/Badge";
-import { ExternalLink, Database, Layers, Radio, ShieldCheck, HelpCircle } from "lucide-react";
+import { Database, Layers, Radio, ShieldCheck, HelpCircle } from "lucide-react";
 
 // Inline SVG Icon components to prevent bundle/export resolution errors
 const GithubIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
@@ -27,6 +27,7 @@ interface NodeDescriptor {
 
 export const ProjectsSection: React.FC = () => {
   const [activeProjectTab, setActiveProjectTab] = useState<"intellishop" | "scalecart">("intellishop");
+  const [activeSubTab, setActiveSubTab] = useState<"overview" | "core" | "async" | "roadmap">("overview");
   const [selectedNode, setSelectedNode] = useState<NodeDescriptor | null>(null);
 
   // System design documentation maps
@@ -94,6 +95,7 @@ export const ProjectsSection: React.FC = () => {
             onClick={() => {
               setActiveProjectTab("intellishop");
               setSelectedNode(null);
+              setActiveSubTab("overview");
             }}
             className={`pb-4 px-6 font-mono text-sm font-bold border-b-2 transition-all ${
               activeProjectTab === "intellishop"
@@ -107,6 +109,7 @@ export const ProjectsSection: React.FC = () => {
             onClick={() => {
               setActiveProjectTab("scalecart");
               setSelectedNode(null);
+              setActiveSubTab("overview");
             }}
             className={`pb-4 px-6 font-mono text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
               activeProjectTab === "scalecart"
@@ -120,10 +123,10 @@ export const ProjectsSection: React.FC = () => {
         </div>
 
         {/* Project Details Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start text-left">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch text-left">
           
           {/* Project Details (Left Panel) */}
-          <div className="lg:col-span-6 flex flex-col justify-between h-full">
+          <div className="lg:col-span-6 flex flex-col justify-between">
             <GlassCard className="bg-slate-900/30 p-8 flex flex-col h-full justify-between" hoverEffect={false}>
               <div>
                 <div className="flex items-center justify-between gap-4 mb-4">
@@ -139,70 +142,128 @@ export const ProjectsSection: React.FC = () => {
                   </div>
                 </div>
 
-                <p className="text-sm text-slate-300 leading-relaxed font-sans mb-6">
-                  {activeProjectTab === "intellishop"
-                    ? "A smart, monolithic e-commerce API platform built to learn scalable system design foundations. Implemented Spring Boot MVC, database schemas with structured relations, optimized indexes, and REST controllers supporting safe payload validations."
-                    : "A highly distributed e-commerce architecture designed to scale. Built with microservices principles, incorporating an Nginx API Gateway routing to spring boot containers, Redis lookup cache systems to shield databases, and an Apache Kafka messaging queue decoupling heavy order pipelines."}
-                </p>
+                {/* Sub Tab selection for ScaleCart detailed specs */}
+                {activeProjectTab === "scalecart" && (
+                  <div className="flex flex-wrap border-b border-slate-800/80 mb-5 font-mono text-[10px] gap-1">
+                    <button
+                      onClick={() => setActiveSubTab("overview")}
+                      className={`pb-2 px-2.5 font-bold border-b-2 transition-all ${
+                        activeSubTab === "overview" ? "text-brand-blue border-brand-blue" : "text-slate-500 border-transparent hover:text-slate-300"
+                      }`}
+                    >
+                      OVERVIEW
+                    </button>
+                    <button
+                      onClick={() => setActiveSubTab("core")}
+                      className={`pb-2 px-2.5 font-bold border-b-2 transition-all ${
+                        activeSubTab === "core" ? "text-brand-blue border-brand-blue" : "text-slate-500 border-transparent hover:text-slate-300"
+                      }`}
+                    >
+                      CORE ARCHITECTURE
+                    </button>
+                    <button
+                      onClick={() => setActiveSubTab("async")}
+                      className={`pb-2 px-2.5 font-bold border-b-2 transition-all ${
+                        activeSubTab === "async" ? "text-brand-blue border-brand-blue" : "text-slate-500 border-transparent hover:text-slate-300"
+                      }`}
+                    >
+                      ASYNC PATTERNS
+                    </button>
+                    <button
+                      onClick={() => setActiveSubTab("roadmap")}
+                      className={`pb-2 px-2.5 font-bold border-b-2 transition-all ${
+                        activeSubTab === "roadmap" ? "text-brand-blue border-brand-blue" : "text-slate-500 border-transparent hover:text-slate-300"
+                      }`}
+                    >
+                      RESILIENCE & ROADMAP
+                    </button>
+                  </div>
+                )}
 
-                {/* Architecture details lists */}
-                <div className="space-y-4 mb-8">
-                  <h4 className="font-mono text-xs font-bold text-slate-400 uppercase tracking-widest">
-                    Core Specifications
-                  </h4>
-                  <ul className="space-y-2.5 font-mono text-xs text-slate-300">
-                    <li className="flex items-center gap-2">
-                      <span className="text-emerald-400">✔</span>
-                      <span>
-                        {activeProjectTab === "intellishop"
-                          ? "Database Layer: Clean 3NF schemas preventing anomaly cycles"
-                          : "Scalability: Database read-scaling using Primary-Replica separation"}
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-emerald-400">✔</span>
-                      <span>
-                        {activeProjectTab === "intellishop"
-                          ? "Authentication: JWT sessionless verification"
-                          : "Caching: Redis lookup cache reducing DB pressure by 70%"}
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-emerald-400">✔</span>
-                      <span>
-                        {activeProjectTab === "intellishop"
-                          ? "Performance: Hibernate indexing configuration"
-                          : "Decoupled Processing: Kafka broker queuing asynchronous jobs"}
-                      </span>
-                    </li>
-                  </ul>
-                </div>
+                {/* Descriptions based on selected project */}
+                {activeProjectTab === "intellishop" ? (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-mono font-bold text-slate-300 uppercase tracking-wide">
+                      Shop Management System | Full-Stack Software Project
+                    </h4>
+                    <p className="text-xs md:text-sm text-slate-300 leading-relaxed font-sans">
+                      Built a full-stack shop management software for a local medical and grocery store to digitize billing, inventory, customer credit management, and business operations. Developed the backend using Java Spring Boot and PostgreSQL, and designed a modern React-based frontend. Implemented features such as inventory tracking, expiry alerts, automated monthly billing for credit customers, barcode/manual product billing, customer transaction management, supplier and employee management, and sales analytics. Designed an optimized relational database schema with scalable architecture and real-world business workflow handling.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3.5 text-xs md:text-sm text-slate-300 leading-relaxed font-sans max-h-[300px] overflow-y-auto pr-2">
+                    {activeSubTab === "overview" && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-mono font-bold text-slate-300 uppercase tracking-wide">
+                          High-Scale Order & Inventory Backend
+                        </h4>
+                        <p>
+                          ScaleCart is a highly distributed order and inventory microservice suite structured to simulate high-load production-grade transactions.
+                        </p>
+                        <div className="bg-slate-950/80 border border-slate-800 rounded p-3 font-mono text-[10px] space-y-1">
+                          <div className="text-slate-500">RUNTIME_SPECIFICATION:</div>
+                          <div><span className="text-slate-400">Language:</span> Java 23</div>
+                          <div><span className="text-slate-400">Framework:</span> Spring Boot 4.0 / Spring Security</div>
+                          <div><span className="text-slate-400">Persistent:</span> PostgreSQL 17 / Hibernate</div>
+                          <div><span className="text-slate-400">Caching & Messaging:</span> Redis, Apache Kafka</div>
+                        </div>
+                      </div>
+                    )}
 
-                {/* Tech stack badges */}
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {activeProjectTab === "intellishop" ? (
-                    <>
-                      <Badge text="Java" variant="gray" />
-                      <Badge text="Spring Boot" variant="gray" />
-                      <Badge text="MySQL" variant="gray" />
-                      <Badge text="REST APIs" variant="gray" />
-                      <Badge text="OOP" variant="gray" />
-                    </>
-                  ) : (
-                    <>
-                      <Badge text="Java" variant="gray" />
-                      <Badge text="Spring Boot" variant="gray" />
-                      <Badge text="PostgreSQL" variant="gray" />
-                      <Badge text="Redis" variant="gray" />
-                      <Badge text="Kafka" variant="gray" />
-                      <Badge text="Docker" variant="gray" />
-                    </>
-                  )}
-                </div>
+                    {activeSubTab === "core" && (
+                      <div className="space-y-2.5">
+                        <div>
+                          <strong className="text-white block font-mono text-[11px] uppercase tracking-wide">Authentication & Authorization</strong>
+                          <p className="text-xs mt-0.5">JWT-based auth with RBAC (CUSTOMER, SELLER, ADMIN). Refresh token rotation with reuse detection — if a stolen token is reused, all sessions for that user are immediately revoked. Access tokens expire in 15 mins, and long-lived refresh tokens (7 days) are stored in the DB for server-side invalidation.</p>
+                        </div>
+                        <div>
+                          <strong className="text-white block font-mono text-[11px] uppercase tracking-wide">Product Catalog Caching & Pagination</strong>
+                          <p className="text-xs mt-0.5">Product reads are cached in Redis with a 5-min TTL. Updates trigger cache invalidation via a write-invalidate pattern. Search results use filtered keyset pagination with Base64-encoded opaque cursors, providing O(log n) search performance via composite indexing on `(status, category, price, created_at, id)`.</p>
+                        </div>
+                        <div>
+                          <strong className="text-white block font-mono text-[11px] uppercase tracking-wide">Order Idempotency & Stock Allocation</strong>
+                          <p className="text-xs mt-0.5">Order placement is idempotent (requests filtered via Redis lookup with DB unique constraint fallbacks). Handles concurrent stock reservation without DB locks via optimistic locking (`@Version`) with 3-attempt retries and exponential backoff. Available stock is calculated dynamically (`quantity - reserved`) using a decoupled reserved column.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeSubTab === "async" && (
+                      <div className="space-y-2.5">
+                        <div>
+                          <strong className="text-white block font-mono text-[11px] uppercase tracking-wide">Payment Saga (Choreographed System)</strong>
+                          <p className="text-xs mt-0.5">Choreography-based distributed saga across Order and Payment services via Kafka. Payment success triggers stock confirmation and order confirmation. Payment failure triggers stock release and order failure with reasons. Modeled for drop-in real payment integration.</p>
+                        </div>
+                        <div>
+                          <strong className="text-white block font-mono text-[11px] uppercase tracking-wide">Transactional Outbox Pattern</strong>
+                          <p className="text-xs mt-0.5">To prevent dual-write inconsistencies, orders and outbox events are committed inside a single database transaction. A scheduled poller publishes events every 5 seconds to Kafka topics (`order.placed`, `payment.events`, `order.lifecycle`, `inventory.events`), guaranteeing at-least-once message delivery.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeSubTab === "roadmap" && (
+                      <div className="space-y-2 text-xs">
+                        <div>
+                          <strong className="text-white block font-mono text-[11px] uppercase tracking-wide">Resilience Configurations</strong>
+                          <p className="text-slate-300">Redis failures are non-fatal: idempotency checks fall back to the DB, and product caches fall through to the DB via a custom `CacheErrorHandler`. All Redis calls are safely wrapped in try-catches.</p>
+                        </div>
+                        <div className="pt-1.5 border-t border-slate-800/40">
+                          <strong className="text-brand-sky block font-mono text-[11px] uppercase tracking-wide">Planned Enhancements (Roadmap)</strong>
+                          <ul className="list-disc list-inside space-y-0.5 text-slate-400 pl-1 mt-1 font-sans text-[11px]">
+                            <li><strong>Dead Letter Queue:</strong> Failed Kafka messages routed to DLQ with retry/requeue.</li>
+                            <li><strong>Distributed Tracing:</strong> OpenTelemetry trace propagation across HTTP/Kafka.</li>
+                            <li><strong>Circuit Breakers:</strong> wrapping stock reservation calls with Resilience4j.</li>
+                            <li><strong>Rate Limiting:</strong> Redis-backed per-customer Bucket4j limits on order place.</li>
+                            <li><strong>Integration Testing:</strong> saga verification using Testcontainers (Postgres, Redis, Kafka).</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-4 pt-6 border-t border-slate-800/80 mt-auto">
+              <div className="flex items-center gap-4 pt-6 border-t border-slate-800/80 mt-6">
                 <a
                   href={activeProjectTab === "intellishop" ? "https://github.com/ha31457/Intelli-Shop-BE" : "https://github.com/ha31457/ScaleCart-BE"}
                   target="_blank"
@@ -223,9 +284,9 @@ export const ProjectsSection: React.FC = () => {
             </GlassCard>
           </div>
 
-          {/* Interactive Architecture Visualizer (Right Panel) */}
+          {/* Interactive Architecture Visualizer (Right Panel - Styled with horizontal scrolls for mobile) */}
           <div className="lg:col-span-6 flex flex-col justify-between">
-            <GlassCard className="bg-slate-900/20 border-slate-800/80 p-6 flex flex-col" hoverEffect={false}>
+            <GlassCard className="bg-slate-900/20 border-slate-800/80 p-6 flex flex-col h-full" hoverEffect={false}>
               
               <div className="flex items-center justify-between mb-4">
                 <span className="font-mono text-xs text-slate-500 uppercase tracking-widest">
@@ -237,125 +298,127 @@ export const ProjectsSection: React.FC = () => {
                 </div>
               </div>
 
-              {/* Diagrams */}
-              <div className="h-64 bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col justify-center items-center relative overflow-hidden">
-                {activeProjectTab === "intellishop" ? (
-                  /* IntelliShop flow diagram (Monolith) */
-                  <div className="flex flex-col md:flex-row items-center gap-6 md:gap-4 w-full justify-around relative">
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none hidden md:block">
-                      <path d="M 120,60 Q 220,60 220,60" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
-                      <path d="M 330,60 Q 420,60 420,60" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
-                    </svg>
+              {/* Diagrams Wrapper - Provided with horizontal overflow scroll for small viewports */}
+              <div className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col justify-center items-center relative overflow-x-auto overflow-y-hidden md:overflow-hidden select-none h-64 scrollbar-thin scrollbar-thumb-slate-800">
+                <div className="min-w-[480px] md:min-w-0 w-full flex justify-center items-center h-full">
+                  {activeProjectTab === "intellishop" ? (
+                    /* IntelliShop flow diagram (Monolith) */
+                    <div className="flex items-center gap-4 w-full justify-around relative">
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none hidden md:block">
+                        <path d="M 120,60 Q 220,60 220,60" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
+                        <path d="M 330,60 Q 420,60 420,60" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
+                      </svg>
 
-                    {/* Client Node */}
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="px-3 py-2 bg-slate-900 border border-slate-800 rounded font-mono text-[10px] text-slate-400 select-none">
-                        Web Browser
+                      {/* Client Node */}
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="px-3 py-2 bg-slate-900 border border-slate-800 rounded font-mono text-[10px] text-slate-400 select-none">
+                          Web Browser
+                        </div>
+                        <span className="text-[8px] font-mono text-slate-600">CLIENT</span>
                       </div>
-                      <span className="text-[8px] font-mono text-slate-600">CLIENT</span>
+
+                      {/* Auth + API Node */}
+                      <button
+                        onClick={() => handleNodeClick("auth", "intellishop")}
+                        className={`px-4 py-2 border rounded font-mono text-[10px] flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
+                          selectedNode?.name.includes("Security")
+                            ? "bg-brand-blue/10 border-brand-blue text-brand-light"
+                            : "bg-slate-900/90 border-slate-700 text-slate-200"
+                        }`}
+                      >
+                        <ShieldCheck size={14} className="text-brand-blue" />
+                        <span>Security API</span>
+                      </button>
+
+                      {/* JPA Layer */}
+                      <button
+                        onClick={() => handleNodeClick("jpa", "intellishop")}
+                        className={`px-4 py-2 border rounded font-mono text-[10px] flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
+                          selectedNode?.name.includes("JPA")
+                            ? "bg-brand-cyan/10 border-brand-cyan text-brand-cyan"
+                            : "bg-slate-900/90 border-slate-700 text-slate-200"
+                        }`}
+                      >
+                        <Layers size={14} className="text-brand-cyan" />
+                        <span>Spring JPA</span>
+                      </button>
+
+                      {/* MySQL Database */}
+                      <button
+                        onClick={() => handleNodeClick("mysql", "intellishop")}
+                        className={`px-4 py-2 border rounded font-mono text-[10px] flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
+                          selectedNode?.name.includes("MySQL")
+                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                            : "bg-slate-900/90 border-slate-700 text-slate-200"
+                        }`}
+                      >
+                        <Database size={14} className="text-emerald-400" />
+                        <span>MySQL (3NF)</span>
+                      </button>
                     </div>
+                  ) : (
+                    /* ScaleCart flow diagram (Microservices) */
+                    <div className="grid grid-cols-4 gap-4 w-full justify-items-center items-center">
+                      
+                      {/* Gateway (Spring Cloud Gateway) */}
+                      <button
+                        onClick={() => handleNodeClick("gateway", "scalecart")}
+                        className={`px-3 py-2 border rounded font-mono text-[9px] w-full flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
+                          selectedNode?.name.includes("Spring Cloud")
+                            ? "bg-brand-blue/10 border-brand-blue text-brand-light"
+                            : "bg-slate-900/90 border-slate-700 text-slate-200"
+                        }`}
+                      >
+                        <Radio size={12} className="text-brand-blue" />
+                        <span>Spring Gateway</span>
+                      </button>
 
-                    {/* Auth + API Node */}
-                    <button
-                      onClick={() => handleNodeClick("auth", "intellishop")}
-                      className={`px-4 py-2 border rounded font-mono text-[10px] flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
-                        selectedNode?.name.includes("Security")
-                          ? "bg-brand-blue/10 border-brand-blue text-brand-light"
-                          : "bg-slate-900/90 border-slate-700 text-slate-200"
-                      }`}
-                    >
-                      <ShieldCheck size={14} className="text-brand-blue" />
-                      <span>Security API</span>
-                    </button>
+                      {/* Cache (Redis) */}
+                      <button
+                        onClick={() => handleNodeClick("redis", "scalecart")}
+                        className={`px-3 py-2 border rounded font-mono text-[9px] w-full flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
+                          selectedNode?.name.includes("Redis")
+                            ? "bg-brand-cyan/10 border-brand-cyan text-brand-cyan"
+                            : "bg-slate-900/90 border-slate-700 text-slate-200"
+                        }`}
+                      >
+                        <Layers size={12} className="text-brand-cyan" />
+                        <span>Redis Cache</span>
+                      </button>
 
-                    {/* JPA Layer */}
-                    <button
-                      onClick={() => handleNodeClick("jpa", "intellishop")}
-                      className={`px-4 py-2 border rounded font-mono text-[10px] flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
-                        selectedNode?.name.includes("JPA")
-                          ? "bg-brand-cyan/10 border-brand-cyan text-brand-cyan"
-                          : "bg-slate-900/90 border-slate-700 text-slate-200"
-                      }`}
-                    >
-                      <Layers size={14} className="text-brand-cyan" />
-                      <span>Spring JPA</span>
-                    </button>
+                      {/* Queue (Kafka) */}
+                      <button
+                        onClick={() => handleNodeClick("kafka", "scalecart")}
+                        className={`px-3 py-2 border rounded font-mono text-[9px] w-full flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
+                          selectedNode?.name.includes("Kafka")
+                            ? "bg-brand-purple/10 border-brand-purple text-purple-300"
+                            : "bg-slate-900/90 border-slate-700 text-slate-200"
+                        }`}
+                      >
+                        <Radio size={12} className="text-brand-purple animate-pulse" />
+                        <span>Kafka Queue</span>
+                      </button>
 
-                    {/* MySQL Database */}
-                    <button
-                      onClick={() => handleNodeClick("mysql", "intellishop")}
-                      className={`px-4 py-2 border rounded font-mono text-[10px] flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
-                        selectedNode?.name.includes("MySQL")
-                          ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
-                          : "bg-slate-900/90 border-slate-700 text-slate-200"
-                      }`}
-                    >
-                      <Database size={14} className="text-emerald-400" />
-                      <span>MySQL (3NF)</span>
-                    </button>
-                  </div>
-                ) : (
-                  /* ScaleCart flow diagram (Microservices) */
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-lg justify-items-center items-center">
-                    
-                    {/* Gateway (Spring Cloud Gateway) */}
-                    <button
-                      onClick={() => handleNodeClick("gateway", "scalecart")}
-                      className={`px-3 py-2 border rounded font-mono text-[9px] w-full flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
-                        selectedNode?.name.includes("Spring Cloud")
-                          ? "bg-brand-blue/10 border-brand-blue text-brand-light"
-                          : "bg-slate-900/90 border-slate-700 text-slate-200"
-                      }`}
-                    >
-                      <Radio size={12} className="text-brand-blue" />
-                      <span>Spring Gateway</span>
-                    </button>
+                      {/* DBMS (PostgreSQL) */}
+                      <button
+                        onClick={() => handleNodeClick("postgres", "scalecart")}
+                        className={`px-3 py-2 border rounded font-mono text-[9px] w-full flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
+                          selectedNode?.name.includes("PostgreSQL")
+                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                            : "bg-slate-900/90 border-slate-700 text-slate-200"
+                        }`}
+                      >
+                        <Database size={12} className="text-emerald-400" />
+                        <span>PG Master-Repl</span>
+                      </button>
 
-                    {/* Cache (Redis) */}
-                    <button
-                      onClick={() => handleNodeClick("redis", "scalecart")}
-                      className={`px-3 py-2 border rounded font-mono text-[9px] w-full flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
-                        selectedNode?.name.includes("Redis")
-                          ? "bg-brand-cyan/10 border-brand-cyan text-brand-cyan"
-                          : "bg-slate-900/90 border-slate-700 text-slate-200"
-                      }`}
-                    >
-                      <Layers size={12} className="text-brand-cyan" />
-                      <span>Redis Cache</span>
-                    </button>
-
-                    {/* Queue (Kafka) */}
-                    <button
-                      onClick={() => handleNodeClick("kafka", "scalecart")}
-                      className={`px-3 py-2 border rounded font-mono text-[9px] w-full flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
-                        selectedNode?.name.includes("Kafka")
-                          ? "bg-brand-purple/10 border-brand-purple text-purple-300"
-                          : "bg-slate-900/90 border-slate-700 text-slate-200"
-                      }`}
-                    >
-                      <Radio size={12} className="text-brand-purple animate-pulse" />
-                      <span>Kafka Queue</span>
-                    </button>
-
-                    {/* DBMS (PostgreSQL) */}
-                    <button
-                      onClick={() => handleNodeClick("postgres", "scalecart")}
-                      className={`px-3 py-2 border rounded font-mono text-[9px] w-full flex flex-col items-center gap-1 shadow cursor-pointer transition-all hover:scale-105 ${
-                        selectedNode?.name.includes("PostgreSQL")
-                          ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
-                          : "bg-slate-900/90 border-slate-700 text-slate-200"
-                      }`}
-                    >
-                      <Database size={12} className="text-emerald-400" />
-                      <span>PG Master-Repl</span>
-                    </button>
-
-                    {/* Decorative connection info lines */}
-                    <div className="col-span-4 text-[8px] font-mono text-slate-600 mt-2 pointer-events-none select-none">
-                      CONNECTOR: REST_CLIENT + AMQP_EVENT | LATENCY_GAP: &lt;15ms
+                      {/* Decorative connection info lines */}
+                      <div className="col-span-4 text-[8px] font-mono text-slate-600 mt-2 pointer-events-none select-none">
+                        CONNECTOR: REST_CLIENT + AMQP_EVENT | LATENCY_GAP: &lt;15ms
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Node Inspection description (Bottom of right panel) */}

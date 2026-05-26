@@ -3,7 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Badge } from "../ui/Badge";
-import { Avatar3D } from "./Avatar3D";
+import Avatar3D from "./Avatar3D";
 import { FileText, ArrowUpRight, Mail } from "lucide-react";
 
 // Inline SVG Icon components to prevent bundle/export resolution errors
